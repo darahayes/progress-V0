@@ -1,0 +1,25 @@
+{
+  "name": "progress",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/darragh-hayes/progress"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/darragh-hayes/progress/issues"
+  },
+  "dependencies" : {
+    "mqtt": "^1.4.1",
+    "mongoose": "^4.1.7",
+    "node-uuid": "^1.4.3",
+    "amqp": "^0.2.4 "
+  },
+  "homepage": "https://github.com/darragh-hayes/progress"
+}
