@@ -1,51 +1,91 @@
-var mongoose = require('mongoose')
-var Schema = mongoose.Schema
-  , ObjectId = Schema.ObjectId;
-var async = require('async')
+module.exports = function(mongoose) {
 
-var category_schema = new Schema({
-	name: {type: String, required: true, enum: ['Resistance Training', 'Body Weight', 'Cardio'], unique: true},
-	exercises: [{type: Schema.Types.ObjectId, ref: 'Exercise Definition'}]
-})
+	var Schema = mongoose.Schema
+	  , ObjectId = Schema.ObjectId;
+	var async = require('async')
 
-var tag_schema = new Schema({
-	name: {type: String, required: true, unique: true},
-	exercises: [{type: Schema.Types.ObjectId, ref: 'Exercise Definition'}]
-});
-
-//these are the exercise definitions
-//not actual exercises logged by a user
-
-var exercise_definition_schema = new Schema({
-	name: String,
-	category: String,
-	tags: [String],
-	measurements: [{ measure: String, unit: String }]
-});
-
-
-//save a category or a tag if it doesn't exist and push the new exercise to its list
-exports.save_category_or_tag = function(model_name, model_schema, exercise, callback) {
-	model_schema.findOne({name: model_name}, function(err, model) {
-		if (err) { return cb(err); }
-		if (!model) {
-			model = model_schema({name: model_name});
-		}
-		model.exercises.push(exercise);
-		model.save(function(err, saved) {
-			callback(err, saved);
-		})
+	var category_schema = new Schema({
+		name: {type: String, required: true, enum: ['Resistance Training', 'Body Weight', 'Cardio'], unique: true},
+		exercises: [{type: Schema.Types.ObjectId, ref: 'Exercise Definition'}]
 	})
+
+	var tag_schema = new Schema({
+		name: {type: String, required: true, unique: true},
+		exercises: [{type: Schema.Types.ObjectId, ref: 'Exercise Definition'}]
+	});
+
+	//these are the exercise definitions
+	//not actual exercises logged by a user
+
+	var exercise_definition_schema = new Schema({
+		name: String,
+		category: String,
+		tags: [String],
+		type: String,
+		owner: {type: String}
+	});
+
+
+	//save a category or a tag if it doesn't exist and push the new exercise to its list
+	var save_category_or_tag = function(model_name, model_schema, exercise, callback) {
+		model_schema.findOne({name: model_name}, function(err, model) {
+			if (err) { return cb(err); }
+			if (!model) {
+				model = model_schema({name: model_name});
+				console.log('CREATING', model);
+			}
+			if (exercise) { model.exercises.push(exercise); }
+			model.save(function(err, saved) {
+				callback(err, saved);
+			})
+		})
+	}
+
+	var save = function(message, cb) {
+		var x = Exercise_Def(message.exercise);
+		console.log('SAVE EXERCISE', x)
+		x.save(function(err, x) {
+			if (err) { return cb(err); }
+			else {
+				console.log('exercise created');
+				save_category_or_tag(x.category, Category, x, function(err, saved) {
+					if (err) { return cb(err); }
+					x.tags.forEach(function(tag) {
+						save_category_or_tag(tag, Tag, x, function(err, saved) {
+							if (err) { return cb(err); }
+						})
+					});
+					cb(null, x);
+				})
+			}
+		})
+	}
+
+	var read_exercises = function(message, cb) {
+		Exercise_Def.find(function(err, x) {
+			cb(err, x);
+		});
+	}
+
+	var remove = function(message, cb) {
+		var x = message.exercise;
+		Exercise_Def.remove(x.id, function(err) {
+			if (err) { return cb(err); }
+			else {
+				cb(null, 'exercise removed');
+			}
+		});
+	}
+
+	Category = mongoose.model('Category', category_schema);
+	Tag = mongoose.model('Tag', tag_schema);
+	Exercise_Def = mongoose.model('Exercise Definition', exercise_definition_schema);
+
+	return {
+		create: Exercise_Def,
+		read_exercises: read_exercises,
+		save: save,
+		remove: remove
+	}
 }
 
-//creation of exercise def is as follows:
-//receive object like this: {name: 'pushup', category: 'Body Weight', tags, ['Arms', 'Chest'], 
-// 														measurements: [{measure: 'reps', unit: 'reps'}, {measure: 'weight', unit: 'lbs'}]}
-//create the thing
-//push a reference to it to the category, create a new category if it doesn't exist and then push
-// for each tag ->
-// Create the tag if not exists, push exercise ref to the tag
-
-exports.Category = mongoose.model('Category', category_schema);
-exports.Tag = mongoose.model('Tag', tag_schema);
-exports.Exercise_Def = mongoose.model('Exercise Definition', exercise_definition_schema);
