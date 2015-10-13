@@ -1,74 +1,73 @@
+var config = require('./config');
+var amqp = require('amqp');
+var connection = amqp.createConnection(config, {reconnect: false});
 var mongoose = require('mongoose');
-var models = require('./exercise');
+var Exercise = require('./exercise')(mongoose);
+
 mongoose.connect('mongodb://localhost:27017/progress');
 
-var Category = models.Category;
-var Exercise_Def = models.Exercise_Def;
-var Tag = models.Tag;
-
-// var save_exercise_def = function(x, cb) {
-
-// 	Category.findOne({category: x.category}, function(err, c) {
-// 		if (err) {cb(err)}
-// 		if (!c) {
-// 			console.log('category', x.category, 'does not exist...\n')
-// 			c = Category({category: x.category});
-// 		}
-// 		c.exercises.push(x);
-// 		c.save(function(err, c) {
-// 			if (err) { return cb(err) }
-// 			console.log('SAVED CATEGORY\n', c);
-
-// 			x.tags.forEach(function(t, index) {
-// 				Tag.findOne({tag: t}, function(err, tag) {
-// 					if (err) { return cb(err)}
-// 					if (!tag) {
-// 						console.log('Tag', t, 'does not exist...\n')
-// 						tag = Tag({tag: t});
-// 					}
-// 					tag.exercises.push(x);
-// 					tag.save(function(err, t) {
-// 						if (err) { cb(err) }
-// 						console.log('SAVED TAG\n', t);
-// 					})
-
-// 					if (index === x.tags.length-1) {
-// 						x.save(function(err, x) {
-// 							cb(err, x)
-// 						})
-// 					}
-// 				});
-// 			});
-// 		})
-// 	});
-// }
-
-var save_exercise_def1 = function(x, cb) {
-	models.save_category_or_tag(x.category, Category, x, function(err, saved) {
-		if (err) { return cb(err); }
-		console.log('CREATED', saved);
-		x.tags.forEach(function(tag) {
-			models.save_category_or_tag(tag, Tag, x, function(err, saved) {
-				if (err) { return cb(err); }
-				console.log('CREATED', saved);
-			})
-		})
-		x.save(function(err, saved) {
-			if (err) {return cb(err); }
-			cb(err, saved)
-		})
-	});
-}
-
-var e0 = Exercise_Def({name: 'pushup', tags: ['Chest', 'Arms'], category: 'Body Weight', measurements: [{measure: 'reps', unit: 'reps'}, {measure: 'weight', unit: 'lbs'}]})
-
-Category.find({name: 'Body Weight'}).populate('exercises').exec(function(err, c) {
-	console.log(err)
-	console.log(c)
+connection.on('error', function(e) {
+  console.log(e.stack)
 })
 
-// save_exercise_def1(e0, function(err, saved) {
-// 	console.log('------------------------------------------------------------------------');
-// 	console.log(saved)
-// 	console.log('------------------------------------------------------------------------');
-// })
+connection.on('ready', function __connectionReady() {
+  console.log('Connected to amqp://' + config.login + ':' + config.password + '@' + config.host + '/' + config.vhost);
+
+  // Connect to exchange
+  var exchange = connection.exchange(config.exchangeName, config.exchange, function __exchangeReady(exchange) {
+    console.log('Exchange \'' + exchange.name + '\' is open');
+  });
+
+  // Setup queue
+  var queue = connection.queue('', config.queue, function __queueReady(queue) {
+    console.log('Queue \'' + queue.name + '\' is open');
+
+    // Bind queue to exchange
+    queue.bind(exchange, '', function __bind() {
+    });
+
+    // Exercise.save_category_or_tag('Test Tag', Tag, {name: 'TEST EXERCISE'}, function(err, data) {
+    //   console.log(err, data)
+    // })
+
+    // Subscribe to messages on queue
+    queue.subscribe(function __listener(message) {
+      // NOTE: if the message was published by another node-amqp client,
+      // message will be a plain JS object, if the message is published by other
+      // clients it may be received as a Buffer, which you'll need to convert
+      // with something like this:
+      // message = JSON.parse(message.data.toString('utf8'));
+      message = JSON.parse(message.data.toString());
+      handleMessage(message, function(err, data) {
+      	console.log(err)
+      	console.log(data)
+        if (data) {
+          message.solutions.push(data)
+          console.log('PUBLISHING\n', message)
+          exchange.publish('', JSON.stringify(message))
+        }
+      });
+      console.log(' [x] Received: ' + JSON.stringify(message));
+    });
+  });
+});
+
+function handleMessage(message, cb) {
+	
+	if (message.need && message.need === 'exercises' && message.solutions.length == 0) {
+    console.log('\nPERFORMING ACTION WITH MESSAGE\n', message, '\n')
+		var cmd = Exercise[message.cmd];
+		if (cmd) {
+			cmd(message, function(err, data) {
+				cb(err, data);
+			});
+		}
+		else {
+			cb(Error('cmd not found'))
+		}
+	}
+	else {
+		console.log('NOT HANDLING MESSAGE')
+    cb();
+	}
+}
