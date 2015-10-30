@@ -19,7 +19,9 @@
     "mqtt": "^1.4.1",
     "mongoose": "^4.1.7",
     "node-uuid": "^1.4.3",
-    "amqp": "^0.2.4 "
+    "amqp": "^0.2.4 ",
+    "express": "^4.13.3",
+    "body-parser": "^1.14.1"
   },
   "homepage": "https://github.com/darragh-hayes/progress"
 }
