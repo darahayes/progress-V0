@@ -6,20 +6,11 @@ var amqp = require('amqp');
 var connection = amqp.createConnection(config, { recover: false });
 var exhange
 
-<<<<<<< Updated upstream:registration/registration.js
-var functions = {
-	create: createUser,
-	update: updateUser,
-	remove: deleteUser,
-	read: readUser
-};
-=======
 connection.on('error', function(err) {
 	console.log(err.stack);
 })
->>>>>>> Stashed changes:users/users.js
 
-//message format {id 1, need: 'users', cmd: 'create', user: {name: 'Darragh', email: 'dara.hayes@email.com'}}
+//message format {id 1, need: 'users', cmd: 'save', user: {name: 'Darragh', email: 'dara.hayes@email.com'}}
 connection.on('ready', function __connectionReady() {
   console.log('Connected to amqp://' + config.login + ':' + config.password + '@' + config.host + '/' + config.vhost);
 
