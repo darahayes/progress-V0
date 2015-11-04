@@ -7,7 +7,7 @@ var connection = amqp.createConnection(config, { recover: false });
 var exhange
 
 var functions = {
-	create: createUser,
+	save: createUser,
 	update: updateUser,
 	remove: deleteUser,
 	read: readUser
