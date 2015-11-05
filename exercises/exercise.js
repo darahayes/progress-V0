@@ -2,7 +2,6 @@ module.exports = function(mongoose) {
 
 	var Schema = mongoose.Schema
 	  , ObjectId = Schema.ObjectId;
-	var async = require('async')
 
 	var category_schema = new Schema({
 		name: {type: String, required: true, enum: ['Resistance Training', 'Body Weight', 'Cardio'], unique: true},
