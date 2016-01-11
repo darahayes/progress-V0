@@ -109,7 +109,9 @@ module.exports = function(mongoose) {
 					}
 				});
 			}
-			cb(null, {warn: 'No user was found with that email address'})
+			else {
+				cb(null, {warn: 'No user was found with that email address'})
+			}
 		});
 	}
 

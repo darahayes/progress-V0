@@ -21,7 +21,8 @@
     "node-uuid": "^1.4.3",
     "amqp": "^0.2.4 ",
     "express": "^4.13.3",
-    "body-parser": "^1.14.1"
+    "body-parser": "^1.14.1",
+    "lodash": "^3.10.1"
   },
   "homepage": "https://github.com/darragh-hayes/progress"
 }

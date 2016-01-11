@@ -1,11 +1,11 @@
 var http = require('http');
 
 
-var makeRequest = function(request, data, done) {
+var makeRequest = function(path, data, done) {
   var options = {
     hostname: 'localhost',
     port: 2048,
-    path: '/'+request,
+    path: path,
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -34,11 +34,13 @@ var makeRequest = function(request, data, done) {
   req.end();
 };
 
-var cmd = {cmd: 'history', user: 'dara'}
-var cmd0 = {cmd: 'save', user: {name: 'Darragh Hayes', age: 20, gender: 'male'}}
+// var cmd = {cmd: 'history', user: 'dara'}
+var cmd0 = {cmd: 'save', user: {name: 'Darragh Hayes', age: 20, gender: 'male', email: 'dara@example.com', password: 'password'}}
+// var cmd0 = {cmd: 'auth', user: {email: 'dara@example.com', password: 'password'}}
 
 
-makeRequest('user', JSON.stringify(cmd0), function(err, data) {
+
+makeRequest('/user', JSON.stringify(cmd0), function(err, data) {
 	console.log(err)
 	console.log(data)
 })
