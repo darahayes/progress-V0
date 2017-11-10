@@ -15,8 +15,8 @@
   "bugs": {
     "url": "https://github.com/darragh-hayes/progress/issues"
   },
-  "dependencies" : {
-    "mqtt": "^1.4.1",
+  "dependencies": {
+    "mqtt": "^2.8.0",
     "mongoose": "^4.1.7",
     "node-uuid": "^1.4.3",
     "amqp": "^0.2.4 ",
